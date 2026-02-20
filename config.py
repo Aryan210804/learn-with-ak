@@ -8,8 +8,14 @@ class Config:
     
     # Database configuration
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(BASE_DIR, 'learn_with_ak.db')
+    
+    # On Vercel, the filesystem is read-only except for /tmp
+    if os.environ.get('VERCEL'):
+        db_path = os.path.join('/tmp', 'learn_with_ak.db')
+    else:
+        db_path = os.path.join(BASE_DIR, 'learn_with_ak.db')
+        
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + db_path
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Super admin email (hardcoded as per requirements)

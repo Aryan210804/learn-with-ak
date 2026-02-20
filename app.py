@@ -13,6 +13,11 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
+
+# Ensure tables are created (especially important for serverless)
+with app.app_context():
+    db.create_all()
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
@@ -676,7 +681,4 @@ def save_ai_roadmap():
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        # Ensure database tables exist
-        db.create_all()
     app.run(debug=True)
