@@ -1,0 +1,858 @@
+{% extends "base.html" %}
+
+{% block title %}AI Roadmap Generator — Learn with AK{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* =================== AI Roadmap Page Styles =================== */
+    :root {
+        --ai-purple: #7c3aed;
+        --ai-purple-light: #a78bfa;
+        --ai-pink: #ec4899;
+        --ai-cyan: #06b6d4;
+        --ai-glow: rgba(124, 58, 237, 0.35);
+    }
+
+    .ai-hero {
+        position: relative;
+        min-height: 40vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 5rem 1rem 3rem;
+        overflow: hidden;
+        background: radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.25) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+    }
+
+    .ai-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c3aed' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        pointer-events: none;
+    }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(6, 182, 212, 0.2));
+        border: 1px solid rgba(124, 58, 237, 0.4);
+        border-radius: 999px;
+        padding: 0.35rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: var(--ai-purple-light);
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(8px);
+    }
+
+    .ai-badge .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--ai-cyan);
+        border-radius: 50%;
+        animation: pulse-ring 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.5;
+            transform: scale(1.4);
+        }
+    }
+
+    .ai-hero-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff 30%, var(--ai-purple-light) 70%, var(--ai-cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        line-height: 1.15;
+    }
+
+    .ai-hero-sub {
+        font-size: 1.1rem;
+        color: var(--text-secondary, #94a3b8);
+        max-width: 520px;
+        margin: 0 auto 2.5rem;
+    }
+
+    /* Search form */
+    .ai-search-wrap {
+        display: flex;
+        gap: 0;
+        max-width: 640px;
+        width: 100%;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1.5px solid rgba(124, 58, 237, 0.4);
+        border-radius: 16px;
+        padding: 6px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 0 40px var(--ai-glow);
+        transition: box-shadow 0.3s;
+    }
+
+    .ai-search-wrap:focus-within {
+        box-shadow: 0 0 60px var(--ai-glow), 0 0 0 2px var(--ai-purple);
+        border-color: var(--ai-purple);
+    }
+
+    .ai-search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #fff;
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+        font-family: inherit;
+    }
+
+    .ai-search-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+    }
+
+    .ai-generate-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, var(--ai-purple), var(--ai-pink));
+        color: #fff;
+        border: none;
+        border-radius: 11px;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.25s;
+        white-space: nowrap;
+    }
+
+    .ai-generate-btn:hover {
+        transform: scale(1.03);
+        box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5);
+    }
+
+    .ai-generate-btn:active {
+        transform: scale(0.98);
+    }
+
+    .ai-generate-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Suggestions */
+    .ai-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        max-width: 640px;
+        margin: 1rem auto 0;
+    }
+
+    .suggestion-pill {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 0.3rem 0.9rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .suggestion-pill:hover {
+        background: rgba(124, 58, 237, 0.2);
+        border-color: var(--ai-purple);
+        color: #fff;
+    }
+
+    /* Loading state */
+    .ai-loader {
+        display: none;
+        text-align: center;
+        padding: 4rem 1rem;
+    }
+
+    .ai-loader.active {
+        display: block;
+    }
+
+    .loader-orbs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    .orb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        animation: orb-bounce 1.2s ease-in-out infinite;
+    }
+
+    .orb:nth-child(1) {
+        background: var(--ai-purple);
+        animation-delay: 0s;
+    }
+
+    .orb:nth-child(2) {
+        background: var(--ai-pink);
+        animation-delay: 0.2s;
+    }
+
+    .orb:nth-child(3) {
+        background: var(--ai-cyan);
+        animation-delay: 0.4s;
+    }
+
+    @keyframes orb-bounce {
+
+        0%,
+        80%,
+        100% {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+
+        40% {
+            transform: translateY(-18px);
+            opacity: 1;
+        }
+    }
+
+    .loader-text {
+        font-size: 1.1rem;
+        color: var(--ai-purple-light);
+        font-weight: 500;
+    }
+
+    /* Error */
+    .ai-error {
+        max-width: 640px;
+        margin: 1.5rem auto 0;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        color: #fca5a5;
+        font-size: 0.925rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    /* Results section */
+    .ai-result-section {
+        padding: 3rem 1rem 5rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .roadmap-header-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .roadmap-header-card::before {
+        content: '🤖';
+        position: absolute;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 4rem;
+        opacity: 0.15;
+    }
+
+    .roadmap-header-card h2 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 0.6rem;
+        color: #fff;
+    }
+
+    .roadmap-header-card p {
+        color: var(--text-secondary, #94a3b8);
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .roadmap-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 0.25rem 0.85rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    /* Timeline steps */
+    .steps-timeline {
+        position: relative;
+    }
+
+    .steps-timeline::before {
+        content: '';
+        position: absolute;
+        left: 28px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--ai-purple), var(--ai-cyan), transparent);
+        opacity: 0.4;
+    }
+
+    .step-item {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.75rem;
+        animation: step-in 0.5s ease both;
+    }
+
+    .step-item:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .step-item:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .step-item:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    .step-item:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    .step-item:nth-child(5) {
+        animation-delay: 0.25s;
+    }
+
+    .step-item:nth-child(6) {
+        animation-delay: 0.3s;
+    }
+
+    .step-item:nth-child(7) {
+        animation-delay: 0.35s;
+    }
+
+    .step-item:nth-child(8) {
+        animation-delay: 0.4s;
+    }
+
+    .step-item:nth-child(9) {
+        animation-delay: 0.45s;
+    }
+
+    .step-item:nth-child(10) {
+        animation-delay: 0.5s;
+    }
+
+    @keyframes step-in {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .step-number-bubble {
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ai-purple), var(--ai-pink));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #fff;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-card {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.25s;
+    }
+
+    .step-card:hover {
+        background: rgba(124, 58, 237, 0.08);
+        border-color: rgba(124, 58, 237, 0.35);
+        transform: translateX(4px);
+    }
+
+    .step-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.6rem;
+        flex-wrap: wrap;
+    }
+
+    .step-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+    }
+
+    .step-duration {
+        font-size: 0.75rem;
+        background: rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        border-radius: 999px;
+        padding: 0.2rem 0.75rem;
+        color: var(--ai-cyan);
+        white-space: nowrap;
+    }
+
+    .step-desc {
+        color: var(--text-secondary, #94a3b8);
+        font-size: 0.9rem;
+        line-height: 1.65;
+        margin-bottom: 1rem;
+    }
+
+    /* Resources */
+    .resources-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.35);
+        text-transform: uppercase;
+        margin-bottom: 0.6rem;
+    }
+
+    .resource-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .resource-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .resource-link:hover {
+        background: rgba(124, 58, 237, 0.2);
+        border-color: var(--ai-purple);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .resource-icon {
+        font-size: 0.9rem;
+    }
+
+    /* Save / action bar */
+    .ai-action-bar {
+        position: sticky;
+        bottom: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem;
+        z-index: 50;
+        pointer-events: none;
+    }
+
+    .ai-action-bar button,
+    .ai-action-bar a {
+        pointer-events: all;
+        backdrop-filter: blur(12px);
+    }
+
+    .btn-save-roadmap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, var(--ai-purple), var(--ai-pink));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.85rem 1.75rem;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 8px 30px rgba(124, 58, 237, 0.5);
+        transition: all 0.25s;
+    }
+
+    .btn-save-roadmap:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(124, 58, 237, 0.65);
+    }
+
+    .btn-save-roadmap:active {
+        transform: translateY(0);
+    }
+
+    .btn-save-roadmap:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-new-search {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.25s;
+    }
+
+    .btn-new-search:hover {
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    /* Toast notification */
+    .ai-toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .ai-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .ai-toast.error-toast {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .steps-timeline::before {
+            left: 20px;
+        }
+
+        .step-number-bubble {
+            width: 42px;
+            height: 42px;
+            font-size: 0.9rem;
+        }
+
+        .roadmap-header-card {
+            padding: 1.5rem;
+        }
+
+        .roadmap-header-card::before {
+            display: none;
+        }
+
+        .ai-search-wrap {
+            flex-direction: column;
+            border-radius: 12px;
+        }
+
+        .ai-generate-btn {
+            border-radius: 8px;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero / Search -->
+<div class="ai-hero">
+    <div style="width:100%; max-width:700px;">
+        <div class="ai-badge">
+            <span class="pulse-dot"></span>
+            Powered by Google Gemini AI
+        </div>
+
+        <h1 class="ai-hero-title">Generate Any Learning Roadmap<br>in Seconds</h1>
+        <p class="ai-hero-sub">
+            Type any skill, career, or topic — our AI will craft a personalized step-by-step roadmap with curated
+            resources just for you.
+        </p>
+
+        <form method="POST" id="aiForm">
+            <div class="ai-search-wrap">
+                <input type="text" name="topic" id="topicInput" class="ai-search-input"
+                    placeholder="e.g. Full Stack Developer, Machine Learning, UI/UX Design..." value="{{ topic }}"
+                    maxlength="200" autocomplete="off" required>
+                <button type="submit" class="ai-generate-btn" id="generateBtn">
+                    <span id="btnIcon">✨</span>
+                    <span id="btnText">Generate</span>
+                </button>
+            </div>
+        </form>
+
+        <div class="ai-suggestions">
+            <span class="suggestion-pill" onclick="fillTopic('Full Stack Web Developer')">Full Stack Web
+                Developer</span>
+            <span class="suggestion-pill" onclick="fillTopic('Data Science')">Data Science</span>
+            <span class="suggestion-pill" onclick="fillTopic('Cybersecurity')">Cybersecurity</span>
+            <span class="suggestion-pill" onclick="fillTopic('DevOps Engineer')">DevOps Engineer</span>
+            <span class="suggestion-pill" onclick="fillTopic('Android Development')">Android Development</span>
+            <span class="suggestion-pill" onclick="fillTopic('Machine Learning')">Machine Learning</span>
+        </div>
+
+        {% if error %}
+        <div class="ai-error">
+            <span>⚠️</span>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Loading indicator (shown via JS while form submits) -->
+<div class="ai-loader" id="aiLoader">
+    <div class="loader-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+    <p class="loader-text" id="loaderText">Generating your roadmap…</p>
+</div>
+
+<!-- Results -->
+{% if roadmap_data %}
+<section class="ai-result-section" id="resultsSection">
+
+    <!-- Header card -->
+    <div class="roadmap-header-card">
+        {% if roadmap_data._source == 'local' %}
+        <div
+            style="display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));border:1px solid rgba(16,185,129,.4);border-radius:999px;padding:.25rem .85rem;font-size:.75rem;font-weight:700;color:#6ee7b7;margin-bottom:.75rem;letter-spacing:.04em;">
+            📚 From Our Curated Collection
+        </div>
+        {% endif %}
+        <h2>{{ roadmap_data.title }}</h2>
+        <p>{{ roadmap_data.description }}</p>
+        <div class="roadmap-meta">
+            <span class="meta-chip">⏱️ {{ roadmap_data.estimated_time }}</span>
+            <span class="meta-chip">📊 {{ roadmap_data.difficulty }}</span>
+            <span class="meta-chip">🚀 {{ roadmap_data.steps | length }} Steps</span>
+        </div>
+    </div>
+
+    <!-- Steps timeline -->
+    <div class="steps-timeline">
+        {% for step in roadmap_data.steps %}
+        <div class="step-item">
+            <div class="step-number-bubble">{{ step.step_number }}</div>
+            <div class="step-card">
+                <div class="step-card-header">
+                    <h3 class="step-title">{{ step.title }}</h3>
+                    {% if step.duration %}<span class="step-duration">⏳ {{ step.duration }}</span>{% endif %}
+                </div>
+                <p class="step-desc">{{ step.description }}</p>
+
+                {% if step.resources %}
+                <div class="resources-label">Resources</div>
+                <div class="resource-list">
+                    {% for res in step.resources %}
+                    {% set type_icons = {'video': '▶️', 'article': '📄', 'course': '🎓', 'book': '📚', 'tool': '🔧',
+                    'docs': '📖'} %}
+                    <a href="{{ res.url }}" target="_blank" rel="noopener" class="resource-link">
+                        <span class="resource-icon">{{ type_icons.get(res.type, '🔗') }}</span>
+                        {{ res.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Action bar -->
+    <div class="ai-action-bar">
+        <a href="{{ url_for('ai_roadmap') }}" class="btn-new-search">🔄 New Search</a>
+
+        {% if current_user.is_authenticated %}
+        <button class="btn-save-roadmap" id="saveBtn" onclick="saveRoadmap()">
+            💾 Save to My Roadmaps
+        </button>
+        {% else %}
+        <a href="{{ url_for('signup') }}" class="btn-save-roadmap">
+            🚀 Sign Up to Save
+        </a>
+        {% endif %}
+    </div>
+
+</section>
+
+<!-- Hidden roadmap JSON for JS save -->
+<script id="roadmapJson" type="application/json">
+  {{ roadmap_data | tojson }}
+</script>
+{% endif %}
+
+<!-- Toast -->
+<div class="ai-toast" id="aiToast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Roadmap saved!</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const aiForm = document.getElementById('aiForm');
+    const aiLoader = document.getElementById('aiLoader');
+    const generateBtn = document.getElementById('generateBtn');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnText = document.getElementById('btnText');
+    const loaderMessages = [
+        'Generating your roadmap…',
+        'Curating the best resources…',
+        'Structuring learning steps…',
+        'Almost ready…',
+    ];
+
+    function fillTopic(text) {
+        document.getElementById('topicInput').value = text;
+        document.getElementById('topicInput').focus();
+    }
+
+    // Show loader on submit
+    if (aiForm) {
+        aiForm.addEventListener('submit', function () {
+            aiLoader.classList.add('active');
+            generateBtn.disabled = true;
+            btnIcon.textContent = '⏳';
+            btnText.textContent = 'Generating…';
+
+            let i = 0;
+            setInterval(() => {
+                i = (i + 1) % loaderMessages.length;
+                const el = document.getElementById('loaderText');
+                if (el) el.textContent = loaderMessages[i];
+            }, 1800);
+        });
+    }
+
+    // Scroll to results if available
+    window.addEventListener('DOMContentLoaded', () => {
+        const results = document.getElementById('resultsSection');
+        if (results) {
+            setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        }
+    });
+
+    // Save roadmap
+    async function saveRoadmap() {
+        const jsonEl = document.getElementById('roadmapJson');
+        if (!jsonEl) return;
+
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Saving…';
+
+        try {
+            const roadmap = JSON.parse(jsonEl.textContent);
+            const resp = await fetch('/ai-roadmap/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roadmap }),
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                showToast('✅', 'Roadmap saved! Check your Dashboard.', false);
+                saveBtn.textContent = '✅ Saved!';
+                saveBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            } else {
+                showToast('❌', data.message || 'Could not save roadmap.', true);
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save to My Roadmaps';
+            }
+        } catch (err) {
+            showToast('❌', 'Network error — please try again.', true);
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save to My Roadmaps';
+        }
+    }
+
+    function showToast(icon, msg, isError) {
+        const toast = document.getElementById('aiToast');
+        document.getElementById('toastIcon').textContent = icon;
+        document.getElementById('toastMsg').textContent = msg;
+        toast.classList.toggle('error-toast', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+</script>
+{% endblock %}

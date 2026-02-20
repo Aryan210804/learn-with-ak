@@ -18,3 +18,7 @@ class Config:
     # Flask-Login settings
     REMEMBER_COOKIE_DURATION = 86400  # 1 day in seconds
     SESSION_PROTECTION = 'strong'
+
+    # Google Gemini API (for AI Roadmap Generator)
+    # Key is loaded from .env file — never hardcode secrets here
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')

@@ -1,10 +1,13 @@
-from flask import Flask, render_template, url_for, flash, redirect, request, abort
+from flask import Flask, render_template, url_for, flash, redirect, request, abort, jsonify
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file before anything else reads os.environ
 from config import Config
 from models import db, User, Roadmap, RoadmapStep, UserRoadmap, UserProgress, Feedback
 from forms import SignupForm, LoginForm, RoadmapForm, StepForm, RequestResetForm, ResetPasswordForm, FeedbackForm
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from functools import wraps
+from ai_roadmap import generate_roadmap
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -326,6 +329,20 @@ def delete_user(user_id):
     flash(f'User {username} has been deleted successfully.', 'success')
     return redirect(url_for('admin_users'))
 
+@app.route("/admin/user/<int:user_id>/reset-password", methods=['POST'])
+@login_required
+@admin_required
+def admin_reset_password(user_id):
+    user = User.query.get_or_404(user_id)
+    new_password = request.form.get('new_password', '').strip()
+    if not new_password or len(new_password) < 6:
+        flash('Password must be at least 6 characters.', 'danger')
+        return redirect(url_for('admin_user_detail', user_id=user_id))
+    user.set_password(new_password)
+    db.session.commit()
+    flash(f'Password for {user.username} has been reset successfully!', 'success')
+    return redirect(url_for('admin_user_detail', user_id=user_id))
+
 @app.route("/user/progress/<int:step_id>", methods=['POST'])
 @login_required
 def toggle_progress(step_id):
@@ -525,6 +542,137 @@ def reset_token(token):
         flash('Your password has been updated! You can now log in', 'success')
         return redirect(url_for('login'))
     return render_template('auth/reset_token.html', title='Reset Password', form=form)
+
+
+# --- AI Roadmap Generator ---
+
+@app.route("/ai-roadmap", methods=['GET', 'POST'])
+@login_required
+def ai_roadmap():
+    roadmap_data = None
+    topic = ''
+    error = None
+
+    if request.method == 'POST':
+        topic = request.form.get('topic', '').strip()
+        if not topic:
+            error = 'Please enter a topic or skill to generate a roadmap for.'
+        elif len(topic) > 200:
+            error = 'Topic is too long. Please keep it under 200 characters.'
+        else:
+            # Check if we already have a roadmap that closely matches this topic
+            existing = Roadmap.query.filter(Roadmap.title.ilike(f'%{topic}%')).first()
+            if existing:
+                flash(f'We found an existing roadmap for "{topic}"!', 'info')
+                return redirect(url_for('view_roadmap', roadmap_id=existing.id))
+
+            try:
+                # Generate new one via AI
+                roadmap_data = generate_roadmap(topic)
+                
+                # AUTO-SAVE to public roadmaps if it's new
+                title = roadmap_data.get('title', f"Learning Path: {topic}")
+                
+                # Double check exact title match to avoid duplicates
+                if not Roadmap.query.filter_by(title=title).first():
+                    new_rm = Roadmap(
+                        title=title,
+                        description=roadmap_data.get('description', ''),
+                        category='skill',
+                        difficulty=roadmap_data.get('difficulty', 'intermediate').lower(),
+                        is_ai_generated=True,
+                        created_by=current_user.id if current_user.is_authenticated else None
+                    )
+                    # Save meta data (skills, tools, etc.)
+                    new_rm.set_meta(roadmap_data.get('meta_data', {}))
+                    db.session.add(new_rm)
+                    db.session.flush() # Get ID
+
+                    for s in roadmap_data.get('steps', []):
+                        res_text = ""
+                        for r in s.get('resources', []):
+                            res_text += f"[{r.get('name')}]({r.get('url')}) — {r.get('type')}\n"
+                        
+                        step = RoadmapStep(
+                            roadmap_id=new_rm.id,
+                            step_number=s.get('step_number', 1),
+                            title=s.get('title', 'Next Step'),
+                            description=s.get('description', ''),
+                            resources=res_text.strip(),
+                            level=s.get('level', 'Beginner')
+                        )
+                        db.session.add(step)
+                    
+                    db.session.commit()
+                    flash(f'New roadmap for "{topic}" has been added to our collection!', 'success')
+                
+            except Exception as e:
+                err_msg = str(e)
+                # Clean up long API error dumps for the user
+                if '429' in err_msg or 'quota' in err_msg.lower():
+                    error = ('🚫 AI service is temporarily busy (quota limit reached). '
+                             'Try a popular topic like "Data Science" or "Web Development" '
+                             'to get a roadmap from our curated collection, or try again later.')
+                else:
+                    error = err_msg
+
+    return render_template('ai_roadmap.html',
+                           roadmap_data=roadmap_data,
+                           topic=topic,
+                           error=error)
+
+
+@app.route("/ai-roadmap/save", methods=['POST'])
+@login_required
+def save_ai_roadmap():
+    """Save a previously generated AI roadmap to the database."""
+    import json as _json
+    try:
+        data = request.get_json(force=True)
+        roadmap_json = data.get('roadmap')
+        if not roadmap_json:
+            return jsonify({'success': False, 'message': 'No roadmap data provided.'}), 400
+
+        title = roadmap_json.get('title', 'AI Generated Roadmap')
+        description = roadmap_json.get('description', '')
+        estimated_time = roadmap_json.get('estimated_time', '')
+        difficulty = roadmap_json.get('difficulty', 'Intermediate')
+
+        # Map difficulty to valid DB values
+        diff_map = {'Beginner': 'beginner', 'Intermediate': 'intermediate', 'Advanced': 'advanced'}
+        difficulty = diff_map.get(difficulty, 'intermediate')
+
+        new_roadmap = Roadmap(
+            title=title,
+            description=f"{description}\n\nEstimated Time: {estimated_time}",
+            category='skill',
+            difficulty=difficulty,
+            created_by=current_user.id
+        )
+        db.session.add(new_roadmap)
+        db.session.flush()  # Get the ID before commit
+
+        for step_data in roadmap_json.get('steps', []):
+            resources_text = ''
+            for r in step_data.get('resources', []):
+                resources_text += f"[{r.get('name', '')}]({r.get('url', '')}) — {r.get('type', '')}\n"
+
+            step = RoadmapStep(
+                roadmap_id=new_roadmap.id,
+                step_number=step_data.get('step_number', 1),
+                title=step_data.get('title', ''),
+                description=step_data.get('description', ''),
+                resources=resources_text.strip(),
+                level=difficulty
+            )
+            db.session.add(step)
+
+        db.session.commit()
+        return jsonify({'success': True, 'roadmap_id': new_roadmap.id})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 if __name__ == '__main__':

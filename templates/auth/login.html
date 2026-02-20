@@ -29,7 +29,13 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                {{ form.password(class="form-control", placeholder="Enter your password") }}
+                <div class="password-wrapper">
+                    {{ form.password(class="form-control", placeholder="Enter your password", id="loginPassword") }}
+                    <button type="button" class="pw-toggle" onclick="togglePassword('loginPassword', this)"
+                        title="Show password">
+                        <span class="pw-eye">👁️</span>
+                    </button>
+                </div>
                 {% if form.password.errors %}
                 {% for error in form.password.errors %}
                 <div class="form-error">{{ error }}</div>
@@ -99,6 +105,34 @@
         transform: translateY(-2px);
     }
 
+    /* Password toggle */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 3rem;
+    }
+
+    .pw-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        font-size: 1.1rem;
+        line-height: 1;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+
+    .pw-toggle:hover {
+        opacity: 1;
+    }
+
     @keyframes float {
         0% {
             transform: translate(0, 0);
@@ -113,4 +147,20 @@
         }
     }
 </style>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const eye = btn.querySelector('.pw-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.textContent = '🙈';
+            btn.title = 'Hide password';
+        } else {
+            input.type = 'password';
+            eye.textContent = '👁️';
+            btn.title = 'Show password';
+        }
+    }
+</script>
 {% endblock %}

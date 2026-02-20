@@ -11,7 +11,7 @@
     <div class="auth-card glass-panel">
         <div class="auth-header">
             <h1 class="text-gradient">Start Learning</h1>
-            <p style="color: var(--text-secondary);">Join thousands of developers & learners</p>
+            <p style="color: var(--text-secondary);">Join thousands of developers &amp; learners</p>
         </div>
 
         <form method="POST" action="">
@@ -39,7 +39,14 @@
 
             <div class="form-group">
                 <label class="form-label">Password</label>
-                {{ form.password(class="form-control", placeholder="Create a strong password") }}
+                <div class="password-wrapper">
+                    {{ form.password(class="form-control", placeholder="Create a strong password", id="signupPassword")
+                    }}
+                    <button type="button" class="pw-toggle" onclick="togglePassword('signupPassword', this)"
+                        title="Show password">
+                        <span class="pw-eye">👁️</span>
+                    </button>
+                </div>
                 {% if form.password.errors %}
                 {% for error in form.password.errors %}
                 <div class="form-error">{{ error }}</div>
@@ -49,7 +56,13 @@
 
             <div class="form-group">
                 <label class="form-label">Confirm Password</label>
-                {{ form.confirm_password(class="form-control", placeholder="Repeat password") }}
+                <div class="password-wrapper">
+                    {{ form.confirm_password(class="form-control", placeholder="Repeat password", id="signupConfirm") }}
+                    <button type="button" class="pw-toggle" onclick="togglePassword('signupConfirm', this)"
+                        title="Show password">
+                        <span class="pw-eye">👁️</span>
+                    </button>
+                </div>
                 {% if form.confirm_password.errors %}
                 {% for error in form.confirm_password.errors %}
                 <div class="form-error">{{ error }}</div>
@@ -111,6 +124,34 @@
         transform: translateY(-2px);
     }
 
+    /* Password toggle */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 3rem;
+    }
+
+    .pw-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        font-size: 1.1rem;
+        line-height: 1;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+
+    .pw-toggle:hover {
+        opacity: 1;
+    }
+
     @keyframes float {
         0% {
             transform: translate(0, 0);
@@ -125,4 +166,20 @@
         }
     }
 </style>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const eye = btn.querySelector('.pw-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.textContent = '🙈';
+            btn.title = 'Hide password';
+        } else {
+            input.type = 'password';
+            eye.textContent = '👁️';
+            btn.title = 'Show password';
+        }
+    }
+</script>
 {% endblock %}
