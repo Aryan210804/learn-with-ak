@@ -12,11 +12,66 @@ from ai_roadmap import generate_roadmap
 app = Flask(__name__)
 app.config.from_object(Config)
 
+import os
+import shutil
+
+# Vercel filesystem is read-only. We copy the seeded DB to /tmp/ so it's readable and writable.
+if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL'):
+    source_db = os.path.join(app.config['BASE_DIR'], 'learn_with_ak.db')
+    target_db = os.path.join('/tmp', 'learn_with_ak.db')
+    if os.path.exists(source_db) and not os.path.exists(target_db):
+        shutil.copyfile(source_db, target_db)
+
 db.init_app(app)
 
-# Ensure tables are created (especially important for serverless)
+def auto_seed():
+    """Seed the database automatically if empty. Vercel-friendly."""
+    if User.query.filter_by(is_admin=True).first():
+        return # Skip if already seeded
+    
+    print("Auto-seeding database...")
+    from roadmap_content import ALL_ROADMAPS
+    
+    # 1. Create Super Admin
+    admin = User(
+        username="Admin",
+        email=app.config['SUPER_ADMIN_EMAIL'],
+        is_admin=True
+    )
+    admin.set_password("admin123")
+    db.session.add(admin)
+    db.session.commit()
+
+    # 2. Seed Roadmaps
+    for rm_data in ALL_ROADMAPS:
+        roadmap = Roadmap(
+            title=rm_data["title"],
+            description=rm_data["description"],
+            category=rm_data["category"],
+            difficulty=rm_data["difficulty"],
+            created_by=admin.id
+        )
+        roadmap.set_meta(rm_data["meta_data"])
+        db.session.add(roadmap)
+        db.session.commit()
+
+        for idx, step_data in enumerate(rm_data["steps"]):
+            step = RoadmapStep(
+                roadmap_id=roadmap.id,
+                step_number=idx + 1,
+                title=step_data["title"],
+                description=step_data["desc"],
+                resources=step_data["resources"],
+                level=step_data["level"]
+            )
+            db.session.add(step)
+        db.session.commit()
+    print("Auto-seeding complete.")
+
+# Ensure tables are created and data is seeded
 with app.app_context():
     db.create_all()
+    auto_seed()
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -593,9 +648,9 @@ def ai_roadmap():
                     db.session.add(new_rm)
                     db.session.flush() # Get ID
 
-                    for s in roadmap_data.get('steps', []):
+                    for s in roadmap_data.get('steps') or []:
                         res_text = ""
-                        for r in s.get('resources', []):
+                        for r in (s.get('resources') or []):
                             res_text += f"[{r.get('name')}]({r.get('url')}) — {r.get('type')}\n"
                         
                         step = RoadmapStep(
@@ -657,9 +712,9 @@ def save_ai_roadmap():
         db.session.add(new_roadmap)
         db.session.flush()  # Get the ID before commit
 
-        for step_data in roadmap_json.get('steps', []):
+        for step_data in (roadmap_json.get('steps') or []):
             resources_text = ''
-            for r in step_data.get('resources', []):
+            for r in (step_data.get('resources') or []):
                 resources_text += f"[{r.get('name', '')}]({r.get('url', '')}) — {r.get('type', '')}\n"
 
             step = RoadmapStep(

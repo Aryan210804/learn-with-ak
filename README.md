@@ -1,71 +1,81 @@
-# Learn with AK – Personalized Skill & Career Roadmap Platform
+# Learn with AK – AI-Powered Skill & Career Roadmap Platform
 
-Learn with AK is a production-ready, full-stack learning platform designed to help users navigate their career and skill acquisition journeys through structured roadmaps.
+Learn with AK is a production-ready, full-stack learning platform designed to help users navigate their career and skill acquisition journeys through structured, AI-enhanced roadmaps. **Optimized for Vercel Deployment.**
 
 ## 🚀 Key Features
 
-- **Personalized Dashboards**: Track your learning progress with visual indicators.
-- **Structured Roadmaps**: Step-by-step guides for Skills (Python, AI), Courses (Web Dev), and Job Roles (Data Analyst).
-- **Progress Tracking**: Mark steps as completed and monitor your percentage for each roadmap.
-- **Admin Panel**: Comprehensive management system for users and roadmaps.
-- **Modern Neon UI**: Vibrant dark theme with Electric Blue, Cyber Purple, and Emerald Green accents.
-- **Responsive Design**: Optimized for mobile, tablet, and desktop.
+- **✨ AI Roadmap Generator**: Instantly generate custom learning paths for any topic using **Google Gemini AI**.
+- **📋 Curated Roadmaps**: Over 18+ high-quality, pre-built roadmaps covering IT, AI/ML, Cloud, Cyber, Govt Exams, Finance, and more.
+- **Personalized Dashboards**: Track your learning progress with real-time visual indicators.
+- **Progress Tracking**: Interactive steps with completion toggles and automated progress percentage calculation.
+- **Admin Command Center**: Powerful panel to manage users, curation, and user feedback.
+- **Modern Cyber Aesthetics**: A premium, vibrant dark theme (Electric Blue, Cyber Purple, Emerald Green).
+- **Vercel Friendly**: Fully optimized for serverless deployment with automated database seeding and /tmp storage handling.
 
 ## 🛠️ Tech Stack
 
 - **Backend**: Python 3 (Flask)
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Database**: SQLite (SQLAlchemy ORM)
-- **Authentication**: Flask-Login
-- **Forms**: Flask-WTF
+- **AI Engine**: Google Gemini (generativeai)
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla Performance)
+- **Database**: SQLite (SQLAlchemy ORM) - *Smart Serverless Migration*
+- **Deployment**: Vercel & Gunicorn
 
 ## 📂 Project Structure
 
 ```text
 learn-with-ak/
-├── app.py              # Application entry point & routes
-├── config.py           # Configuration & Secret Keys
+├── app.py              # Main Application & Auto-Seeding Logic
+├── ai_roadmap.py       # Gemini AI Integration & Offline Fallback
+├── config.py           # Environment & Vercel Config
+├── roadmap_content.py  # 18+ Curated Roadmap Datasets
 ├── models.py           # Database Schema (SQLAlchemy)
-├── forms.py            # Form validation (WTForms)
-├── utils.py            # Helper decorators & functions
-├── seed_data.py        # Database seeding script
 ├── static/             # Assets (CSS, JS, Images)
-└── templates/          # HTML Templates (Jinja2)
+├── templates/          # HTML Templates (Jinja2)
+└── vercel.json         # Vercel Deployment Configuration
 ```
 
-## ⚙️ Setup & Installation
+## ⚙️ Deployment to Vercel
 
-1. **Clone the project** to your local machine.
-2. **Install dependencies**:
+1. **GitHub**: Push this repository to your GitHub account.
+2. **Vercel**: Import the project.
+3. **Environment Variables**:
+   - `GEMINI_API_KEY`: Your Google AI Studio API Key.
+   - `SECRET_KEY`: A secure random string for sessions.
+4. **Deploy**: Vercel will automatically build the project using `vercel.json`.
+
+## ⚙️ Local Setup
+
+1. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-3. **Initialize the Database**:
-   ```bash
-   python seed_data.py
-   ```
-4. **Run the Application**:
+2. **Setup .env**:
+   Create a `.env` file and add your `GEMINI_API_KEY`.
+3. **Run the Application**:
    ```bash
    python app.py
    ```
+   *Note: The database will auto-seed with 18+ roadmaps on the first run.*
+
 ## 👑 Admin Access
 
-The platform features a built-in admin panel for the designated super-admin email.
+The platform features a built-in admin panel accessible only to the super-admin.
 
-- **Admin Email**: `aryankumar735588@gmail.com`
+- **Default Admin Email**: `aryankumar735588@gmail.com`
+- **Default Password**: `admin123`
 
 **Admin Features**:
-- Dashboard statistics
-- User management (View/Delete)
-- Roadmap management (Add/Edit/Delete)
-- Roadmap Step creation
+- Real-time dashboard statistics.
+- User management and feedback resolution.
+- Manual roadmap & step curation.
+- Performance monitoring.
 
-## 👤 User Features
+## 👤 User Experience
 
-- **Sign up / Login**: Secure authentication.
-- **Browse**: Filter roadmaps by category (Skills, Courses, Jobs) or search by keyword.
-- **Follow**: Add roadmaps to your personal dashboard.
-- **Track**: Click steps to mark them as completed; your progress bar updates in real-time.
+- **AI Generation**: Type any topic; get a custom roadmap in seconds.
+- **Browse & Filter**: Find specialized roadmaps by category.
+- **Interactive Tracking**: Progress bars update instantly as you complete steps.
+- **Feedback Loops**: Submit feature requests or report bugs directly to admins.
 
 ## 📄 License
 
